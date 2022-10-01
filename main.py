@@ -193,6 +193,8 @@ class App:
             avg_wpm = round(sum(previous_wpms) / len(previous_wpms), 1)
             max_wpm = max(previous_wpms)
             return avg_wpm, max_wpm
+        else:
+            return 0, 0
 
 
 app = App()
