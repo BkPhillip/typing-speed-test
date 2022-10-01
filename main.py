@@ -33,7 +33,6 @@ class App:
         self.wpm_average_label.place(relx=0.7, rely=0.07, anchor=CENTER)
         self.high_score_label = Label(text=f"High Score: {max_}")
         self.high_score_label.place(relx=0.95, rely=0.07, anchor=E)
-
         # -------------------------------------------- Text Field -------------------------------------------------- #
         sentences = choices(random_text_sentences, k=2)
         self.text = sentences[0] + sentences[1]
@@ -82,7 +81,6 @@ class App:
     def reset(self):
         sentences = choices(random_text_sentences, k=2)
         self.text = sentences[0] + sentences[1]
-
         self.entry_text.configure(state=NORMAL)
         self.entry_text.delete("1.0", END)
         self.entry_text.insert(INSERT, self.text)
@@ -101,33 +99,33 @@ class App:
 
     def set_tags(self):
         self.entry_text.tag_configure("white", foreground="white", underline=False)
-        self.entry_text.tag_configure("green", foreground="green", underline=False, underlinefg="green")
         self.entry_text.tag_configure("red", foreground="red", underline=False, underlinefg="red")
-        self.entry_text.tag_configure("space", underline=True)
+        self.entry_text.tag_configure("green", foreground="green", underline=False, underlinefg="green")
         self.replace_space_characters()
+        self.entry_text.tag_configure("space", underline=True)
 
     def cursor_position(self, i):
         self.entry_text.configure(state=NORMAL)
-        self.entry_text.mark_set('insert', f'1.{i}')  # Move insert cursor, useful for knowing position
-        self.entry_text.tag_add('white', f'1.{i}', f'1.{i + 1}')
+        self.entry_text.mark_set('insert', "1.%d" % i)  # Move insert cursor, useful for knowing position
+        self.entry_text.tag_add('white', "1.%d" % i, "1.%d" % (i + 1))
         self.entry_text.configure(state=DISABLED)
 
     def correct_key_press(self, i):
         self.correct_count += 1
         self.entry_text.configure(state=NORMAL)
-        self.entry_text.tag_add('green', f'1.{i}', f'1.{i + 1}')
+        self.entry_text.tag_add('green', "1.%d" % i, "1.%d" % (i + 1))
         self.entry_text.configure(state=DISABLED)
 
     def incorrect_key_press(self, i):
         self.entry_text.configure(state=NORMAL)
-        self.entry_text.tag_add('red', f'1.{i}', f'1.{i + 1}')
+        self.entry_text.tag_add('red', "1.%d" % i, "1.%d" % (i + 1))
         self.entry_text.configure(state=DISABLED)
 
     def replace_space_characters(self):  # Rework index notation
         for i in range(int(self.entry_text.index('1.end').split('.')[-1])):
-            text_char = self.entry_text.get(f"1.{i}", f"1.{i + 1}")
+            text_char = self.entry_text.get("1.%d" % i, "1.%d" % (i + 1))
             if text_char == " ":
-                self.entry_text.tag_add("space", f"1.{i}", f"1.{i + 1}")
+                self.entry_text.tag_add("space", "1.%d" % i, "1.%d" % (i + 1))
 
     def next_character(self, event):
         if self.entry_text.index(INSERT) == self.entry_text.index('1.end - 1c'):     # Check if at end of text
@@ -135,12 +133,14 @@ class App:
             self.calculate_wpm()
             self.reset()
         elif event.char == event.keysym or event.keysym == "space" or event.keysym in acceptable_punct:
-            text_char = self.entry_text.get(f"1.{self.position}", f"1.{self.position + 1}")     # Change to tkinter not
+            text_char = self.entry_text.get("1.%d" % self.position, "1.%d" % (self.position + 1))     # Change to tkinter not
+
             if event.char == text_char:  # Check if correct key is pressed
                 self.correct_key_press(self.position)
             else:
                 self.incorrect_key_press(self.position)
             self.position += 1
+
             if self.position > 0:  # Start Timer if at first character
                 self.start_timer()
             self.cursor_position(self.position)
