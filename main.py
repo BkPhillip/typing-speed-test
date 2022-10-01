@@ -35,8 +35,7 @@ class App:
         self.high_score_label = Label(text=f"High Score: {max_}")
         self.high_score_label.place(relx=0.95, rely=0.07, anchor=E)
         # -------------------------------------------- Text Field -------------------------------------------------- #
-        sentences = choices(random_text_sentences, k=2)
-        self.text = sentences[0] + sentences[1]
+        text = self.generate_text()
         self.entry_text = Text(height=6,
                                spacing2=10,
                                highlightthickness=0,
@@ -44,7 +43,7 @@ class App:
                                foreground='gray',
                                wrap=WORD,
                                width=60)
-        self.entry_text.insert(INSERT, self.text)
+        self.entry_text.insert(INSERT, text)
         self.entry_text.place(relx=0.5, rely=0.45, anchor=CENTER)
         self.entry_text.mark_set("insert", "1.0")
         self.set_tags()
@@ -80,24 +79,27 @@ class App:
         self.sec += 1
 
     def reset(self):
-        sentences = choices(random_text_sentences, k=2)
-        self.text = sentences[0] + sentences[1]
+        text = self.generate_text()
         self.entry_text.configure(state=NORMAL)
         self.entry_text.delete("1.0", END)
-        self.entry_text.insert(INSERT, self.text)
+        self.entry_text.insert(INSERT, text)
+        self.entry_text.configure(state=DISABLED)
         for tag in self.entry_text.tag_names():
             self.entry_text.tag_delete(tag)
         self.set_tags()
-        self.entry_text.configure(state=DISABLED)
-        # Return values to default
         self.sec = 0
         self.position = 0
         self.correct_count = 0
         self.incorrect_key = False
         self.cursor_position(self.position)
-
         if self.timer:
             self.stop_timer()
+
+    @staticmethod
+    def generate_text():
+        sentences = choices(random_text_sentences, k=3) # k is number of sentences
+        generated_text = "".join(sentences)
+        return generated_text
 
     def set_tags(self):
         self.replace_space_characters()
@@ -111,7 +113,7 @@ class App:
 
     def cursor_position(self, i):
         self.entry_text.configure(state=NORMAL)
-        self.entry_text.mark_set('insert', "1.%d" % i)  # Move insert cursor, useful for knowing position
+        self.entry_text.mark_set('insert', "1.%d" % i)  # Move insert cursor
         if "space" in self.entry_text.tag_names("1.%d" % i):
             self.entry_text.tag_remove("space", "1.%d" % i, "1.%d" % (i + 1))
             self.entry_text.tag_add("white_space", "1.%d" % i, "1.%d" % (i + 1))
@@ -183,7 +185,8 @@ class App:
         self.wpm_average_label.configure(text=f"WPM Avg: {avg}")
         self.high_score_label.configure(text=f"High Score: {max_}")
 
-    def get_avg_hi_score(self):
+    @staticmethod
+    def get_avg_hi_score():
         if exists("data.txt"):
             with open("data.txt", "r") as file:
                 data = file.readlines()
