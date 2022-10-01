@@ -18,6 +18,7 @@ class App:
         self.window.title('Typing Speed Test')
         self.timer = None
         self.testing = False
+        self.incorrect_key = False
         self.position = 0
         self.sec = 0
         self.correct_count = 0
@@ -88,38 +89,57 @@ class App:
             self.entry_text.tag_delete(tag)
         self.set_tags()
         self.entry_text.configure(state=DISABLED)
-
+        # Return values to default
         self.sec = 0
         self.position = 0
         self.correct_count = 0
+        self.incorrect_key = False
         self.cursor_position(self.position)
 
         if self.timer:
             self.stop_timer()
 
     def set_tags(self):
-        self.entry_text.tag_configure("white", foreground="white", underline=False)
-        self.entry_text.tag_configure("red", foreground="red", underline=False, underlinefg="red")
-        self.entry_text.tag_configure("green", foreground="green", underline=False, underlinefg="green")
         self.replace_space_characters()
         self.entry_text.tag_configure("space", underline=True)
+        self.entry_text.tag_configure("white", foreground="white", underline=False)
+        self.entry_text.tag_configure("green", foreground="green", underline=False)
+        self.entry_text.tag_configure("red", foreground="red", underline=False)
+        self.entry_text.tag_configure("white_space", underline=True, underlinefg="white")
+        self.entry_text.tag_configure("green_space", underline=True, underlinefg="green")
+        self.entry_text.tag_configure("red_space", underline=True, underlinefg="red")
 
     def cursor_position(self, i):
         self.entry_text.configure(state=NORMAL)
         self.entry_text.mark_set('insert', "1.%d" % i)  # Move insert cursor, useful for knowing position
-        self.entry_text.tag_add('white', "1.%d" % i, "1.%d" % (i + 1))
+        if "space" in self.entry_text.tag_names("1.%d" % i):
+            self.entry_text.tag_remove("space", "1.%d" % i, "1.%d" % (i + 1))
+            self.entry_text.tag_add("white_space", "1.%d" % i, "1.%d" % (i + 1))
+        else:
+            self.entry_text.tag_add("white", "1.%d" % i, "1.%d" % (i + 1))
         self.entry_text.configure(state=DISABLED)
 
     def correct_key_press(self, i):
         self.correct_count += 1
         self.entry_text.configure(state=NORMAL)
-        self.entry_text.tag_add('green', "1.%d" % i, "1.%d" % (i + 1))
+        if "white_space" in self.entry_text.tag_names("1.%d" % i):
+            self.entry_text.tag_remove("space", "1.%d" % i, "1.%d" % (i + 1))
+            self.entry_text.tag_add("green_space", "1.%d" % i, "1.%d" % (i + 1))
+        else:
+            self.entry_text.tag_remove('white', "1.%d" % i, "1.%d" % (i + 1))
+            self.entry_text.tag_add('green', "1.%d" % i, "1.%d" % (i + 1))
         self.entry_text.configure(state=DISABLED)
 
     def incorrect_key_press(self, i):
         self.entry_text.configure(state=NORMAL)
-        self.entry_text.tag_add('red', "1.%d" % i, "1.%d" % (i + 1))
+        if "white_space" in self.entry_text.tag_names("1.%d" % i):
+            self.entry_text.tag_remove("space", "1.%d" % i, "1.%d" % (i + 1))
+            self.entry_text.tag_add("red_space", "1.%d" % i, "1.%d" % (i + 1))
+        else:
+            self.entry_text.tag_remove('white', "1.%d" % i, "1.%d" % (i + 1))
+            self.entry_text.tag_add('red', "1.%d" % i, "1.%d" % (i + 1))
         self.entry_text.configure(state=DISABLED)
+        self.incorrect_key = False  # Return to false for next key
 
     def replace_space_characters(self):  # Rework index notation
         for i in range(int(self.entry_text.index('1.end').split('.')[-1])):
@@ -133,13 +153,15 @@ class App:
             self.calculate_wpm()
             self.reset()
         elif event.char == event.keysym or event.keysym == "space" or event.keysym in acceptable_punct:
-            text_char = self.entry_text.get("1.%d" % self.position, "1.%d" % (self.position + 1))     # Change to tkinter not
-
+            text_char = self.entry_text.get("1.%d" % self.position, "1.%d" % (self.position + 1))
             if event.char == text_char:  # Check if correct key is pressed
-                self.correct_key_press(self.position)
+                if self.incorrect_key:
+                    self.incorrect_key_press(self.position)  # Wait til correct key is pressed to turn char red.
+                else:
+                    self.correct_key_press(self.position)  # Correct key it on first try
+                self.position += 1  # Only move to next character after correct key is pressed
             else:
-                self.incorrect_key_press(self.position)
-            self.position += 1
+                self.incorrect_key = True
 
             if self.position > 0:  # Start Timer if at first character
                 self.start_timer()
