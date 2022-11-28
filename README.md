@@ -1,4 +1,4 @@
-# typing-speed-test
+# Typing Speed Test
 Typing speed test. Displays adjusted words per minute, accuracy, average words per minute, and high score. 
 
 Letters that the user has mistyped will appear red. Correctly typed letters will appear green. The letter the user is currently on will appear white.
